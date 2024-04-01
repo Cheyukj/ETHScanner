@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETHScanner - 智能合约静态扫描工具</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: url(images/背景图.jpg) no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+            color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .navbar a {
+            text-decoration: none;
+            color: black;
+            padding: 0 15px;
+            font-weight: bold;
+        }
+        .navbar a:hover {
+            color: #007bff;
+        }
+
+        .title, .subtitle, .upload-form, footer {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1em;
+            margin-bottom: 30px;
+        }
+
+        .upload-form {
+            width: 100%;
+            max-width: 300px;
+            margin-top: 20px;
+        }
+
+        .upload-form input[type="file"] {
+            display: none;
+        }
+
+        .upload-form label {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: black;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .upload-form label:hover {
+            background-color: #333;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8em;
+        }
+
+
+
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="index.html">首页</a>
+        <a href="analysis.html">分析结果</a>
+    </div>
+    <div class="title">ETHScanner</div>
+    <div class="subtitle">智能合约静态扫描工具</div>
+    <div class="upload-form">
+        <input type="file" id="fileInput" name="fileInput" class="upload-input">
+        <label for="fileInput" class="upload-label">选择文件</label>
+    </div>
+    <footer>
+        &copy; 2024 ETHScanner. All rights reserved.
+    </footer>
+
+    <script>
+        // index.html 中的 JavaScript 代码
+        function uploadAndRedirect() {
+            var fileInput = document.getElementById('fileInput');
+            var file = fileInput.files[0];
+            if (file) {
+                // 创建一个 FormData 对象
+                var formData = new FormData();
+                formData.append('file', file);
+                // 发送 POST 请求到服务器端的上传处理接口
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 如果上传成功，携带合约文本跳转到分析页面
+                        var contractSource = data.contractSource; // 假设后端返回了合约源代码
+                        window.location.href = 'analysis.html?sourceCode=' + encodeURIComponent(contractSource);
+                    } else {
+                        // 显示错误信息
+                        alert('上传失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    // 显示错误信息
+                    alert('上传失败: ' + error);
+                });
+            } else {
+                alert('请选择一个文件上传。');
+            }
+        }
+
+
+            /* 读取文件到 analysis.html */
+            document.getElementById('fileInput').addEventListener('change', function(event) {
+                        var file = event.target.files[0];
+                        if (file) {
+                            // 创建一个 FileReader 对象
+                            var reader = new FileReader();
+                            // 设置文件读取成功后的回调函数
+                            reader.onload = function(e) {
+                                // 将文件内容编码为 base64 字符串
+                                var fileContent = e.target.result;
+                                // 跳转到分析页面，并带上文件内容
+                                window.location.href = 'analysis.html?sourceCode=' + encodeURIComponent(fileContent);
+                            };
+                            // 以 Text 格式读取文件
+                            reader.readAsText(file);
+                        } else {
+                            alert('请选择一个文件上传。');
+                        }
+                    });
+
+
+                        // main.js 文件内容
+            document.getElementById('analyze-contract').addEventListener('click', function() {
+                var sourceCode = document.getElementById('contract-source').value;
+                fetch('http://127.0.0.1:5000/analyze',  {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sourceCode: sourceCode })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Analysis failed');
+                    }
+                })
+                .then(data => {
+                    // 处理分析结果
+                    console.log(data);
+                    // 这里可以更新页面或跳转到结果页面
+                })
+                .catch(error => {
+                    console.error('Contract analysis failed:', error);
+                    alert('合约分析失败: ' + error);
+                });
+            });
+
+        </script>
+</body>
+</html>
